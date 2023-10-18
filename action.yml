@@ -1,0 +1,11 @@
+name: nix-develop-action
+description: Use nix development environments correctly with GitHub Actions
+inputs:
+  arguments:
+    description: Additional arguments to pass to the `nix develop` command
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: ${{ github.action_path }}/nix-develop-gha.sh

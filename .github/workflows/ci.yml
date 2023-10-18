@@ -1,0 +1,15 @@
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'releases/*'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v22
+      - uses: ./
+      - run: actionlint
+      - run: shellcheck nix-develop-gha.sh
