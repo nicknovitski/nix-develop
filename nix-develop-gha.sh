@@ -18,6 +18,11 @@ while IFS='=' read -r -d '' n v; do
 	if [ "$n" == "PATH" ]; then
 		continue
 	fi
+	# Skip if the variable is already in the environment with the same
+	# value (treating unset and the empty string as identical states)
+	if [ "${!n:-}" == "$v" ]; then
+		continue
+	fi
 	if (("$(wc -l <<<"$v")" > 1)); then
 		delimiter=$(openssl rand -base64 18)
 		if contains "$delimiter" "$v"; then
