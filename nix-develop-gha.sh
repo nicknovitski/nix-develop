@@ -9,6 +9,8 @@ with_nix_develop() {
 	nix develop --ignore-environment "${arguments[@]}" --command "$@"
 }
 
+with_nix_develop true # Exit immediately if build fails
+
 contains() {
 	grep "$1" --silent <<<"$2"
 }
