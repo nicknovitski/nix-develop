@@ -9,13 +9,21 @@ with_nix_develop() {
 	nix develop --ignore-environment "${arguments[@]}" --command "$@"
 }
 
+contains() {
+	grep "$1" --silent <<<"$2"
+}
+
 # Add all environment variables except for PATH to GITHUB_ENV.
 while IFS='=' read -r -d '' n v; do
 	if [ "$n" == "PATH" ]; then
 		continue
 	fi
 	if (("$(wc -l <<<"$v")" > 1)); then
-		delimiter=$(openssl rand -base64 12)
+		delimiter=$(openssl rand -base64 18)
+		if contains "$delimiter" "$v"; then
+			echo "Environment variable $n contains randomly generated string $delimiter, file an issue and buy a lottery ticket."
+			exit 1
+		fi
 		printf "%s<<%s\n%s%s\n" "$n" "$delimiter" "$v" "$delimiter" >>"${GITHUB_ENV:-/dev/stderr}"
 		continue
 	fi
@@ -34,8 +42,7 @@ IFS=":" read -r -a nix_path_array <<<"$(with_nix_develop bash -c "echo \$PATH")"
 # preserve their order by reversing them before they are reversed again.
 for ((i = ${#nix_path_array[@]} - 1; i >= 0; i--)); do
 	nix_path_entry="${nix_path_array[$i]}"
-	# Don't add anything that's already present in the $PATH
-	if echo "$PATH" | grep "$nix_path_entry" --silent; then
+	if contains "$nix_path_entry" "$PATH"; then
 		continue
 	fi
 	echo "$nix_path_entry" >>"${GITHUB_PATH:-/dev/stderr}"
