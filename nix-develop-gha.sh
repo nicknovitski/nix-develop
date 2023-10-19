@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-# Read the arguments input into an array, so it can be added to a command line.
-IFS=" " read -r -a arguments <<<"${INPUT_ARGUMENTS:-}"
+# Read the arguments into an array, so they can be added correctly as flags
+IFS=" " read -r -a arguments <<<"${@:-}"
 
 with_nix_develop() {
 	nix develop --ignore-environment "${arguments[@]}" --command "$@"

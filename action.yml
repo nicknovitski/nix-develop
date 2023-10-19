@@ -8,4 +8,4 @@ runs:
   using: "composite"
   steps:
     - shell: bash
-      run: ${{ github.action_path }}/nix-develop-gha.sh
+      run: ${{ github.action_path }}/nix-develop-gha.sh ${{ inputs.arguments }}
