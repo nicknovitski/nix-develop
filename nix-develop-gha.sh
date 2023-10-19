@@ -50,5 +50,8 @@ for ((i = ${#nix_path_array[@]} - 1; i >= 0; i--)); do
 	if contains "$nix_path_entry" "$PATH"; then
 		continue
 	fi
+	if ! [ -d "$nix_path_entry" ]; then
+		continue
+	fi
 	echo "$nix_path_entry" >>"${GITHUB_PATH:-/dev/stderr}"
 done
