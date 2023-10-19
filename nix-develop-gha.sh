@@ -5,6 +5,10 @@ set -euo pipefail
 # Read the arguments input into an array, so it can be added to a command line.
 IFS=" " read -r -a arguments <<<"${INPUT_ARGUMENTS:-}"
 
+with_nix_develop() {
+	nix develop --ignore-environment "${arguments[@]}" --command "$@"
+}
+
 # Add all environment variables except for PATH to GITHUB_ENV.
 while IFS='=' read -r -d '' n v; do
 	if [ "$n" == "PATH" ]; then
@@ -16,10 +20,10 @@ while IFS='=' read -r -d '' n v; do
 		continue
 	fi
 	printf "%s=%s\n" "$n" "$v" >>"${GITHUB_ENV:-/dev/stderr}"
-done < <(nix develop --ignore-environment "${arguments[@]}" --command env -0)
+done < <(with_nix_develop env -0)
 
 # Read the nix environment's $PATH into an array
-IFS=":" read -r -a nix_path_array <<<"$(nix develop "${arguments[@]}" --command bash -c "echo \$PATH")"
+IFS=":" read -r -a nix_path_array <<<"$(with_nix_develop bash -c "echo \$PATH")"
 
 # Iterate over the PATH array in reverse
 #
