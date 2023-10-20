@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Read the arguments into an array, so they can be added correctly as flags
-IFS=" " read -r -a arguments <<<"${@:-}"
+IFS=" " read -r -a arguments <<<"${@:-./#default}"
 
 with_nix_develop() {
 	nix develop --ignore-environment "${arguments[@]}" --command "$@"
