@@ -1,4 +1,4 @@
-name: Nix Develop Action
+name: Nix Develop
 description: Nix shell environments brought to GitHub Actions
 author: nick novitski
 inputs:
