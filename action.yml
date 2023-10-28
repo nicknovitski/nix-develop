@@ -1,5 +1,6 @@
-name: nix-develop-action
-description: Use nix development environments correctly with GitHub Actions
+name: Nix Develop Action
+description: Nix shell environments brought to GitHub Actions
+author: nick novitski
 inputs:
   arguments:
     description: Additional arguments to pass to the `nix develop` command
