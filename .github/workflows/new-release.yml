@@ -1,0 +1,13 @@
+name: Release new version
+on:
+  release:
+    types: [released]
+permissions:
+  contents: write
+jobs:
+  update-major-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/publish-action@v0.2.2
+        with:
+          source-tag: ${{ github.event.release.tag_name }}
