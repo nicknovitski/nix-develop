@@ -60,7 +60,7 @@ In other words, rather than [this](https://github.com/DeterminateSystems/nix-git
 
 ...you can do this:
 ```yaml
-      - uses: nicknovitski/nix-develop@1
+      - uses: nicknovitski/nix-develop@v1
       - run: cargo fmt --check
       - run: cargo-deny check
       - run: eclint \
@@ -73,7 +73,7 @@ In other words, rather than [this](https://github.com/DeterminateSystems/nix-git
 You can also pass arbitrary arguments, like using another flake reference:
 
 ```yaml 
-  - uses: nicknovitski/nix-develop@1
+  - uses: nicknovitski/nix-develop@v1
     with:
       arguments: "github:DeterminateSystems/zero-to-nix#multi"
 ```
