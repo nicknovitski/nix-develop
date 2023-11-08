@@ -6,7 +6,7 @@ set -euo pipefail
 IFS=" " read -r -a arguments <<<"${@:-./#default}"
 
 with_nix_develop() {
-	nix develop --ignore-environment "${arguments[@]}" --command "$@"
+	nix develop "${arguments[@]}" --command "$@"
 }
 
 with_nix_develop true # Exit immediately if build fails
