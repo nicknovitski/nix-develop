@@ -78,6 +78,54 @@ You can also pass arbitrary arguments, like using another flake reference:
       arguments: "github:DeterminateSystems/zero-to-nix#multi"
 ```
 
+
+But in addition to being a github action, this repository is a nix flake.  So you could just do this:
+
+```yaml
+  - run: nix run github:nicknovitski/nix-develop -- github:DeterminateSystems/zero-to-nix#multi
+```
+
+And if you want to be sure you're controlling the version of this script and its dependencies, you can use nix!
+
+```nix
+# flake.nix
+{
+  inputs = {
+    nix-develop-gha.url = "github:nicknovitski/nix-develop";
+    nix-develop-gha.inputs.nixpkgs.follows = "nixpkgs"; # match your own "nixpkgs" input
+  };
+
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    nix-develop-gha,
+  }:
+    flake-utils.lib.eachDefaultSystem
+    (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      # expose your locked version of the action locally
+      packages.nix-develop-gha = nix-develop-gha.packages.${system}.default;
+      # don't forget your development shell!
+      devShells = {
+        default = pkgs.mkShell {
+          packages = [
+            pkgs.yarn
+            pkgs.nodejs
+          ];
+        };
+      };
+    });
+}
+```
+
+...and then you can use the pinned package in your workflows like this:
+```yaml
+  - uses: actions/checkout@v4
+  - run: nix run .#nix-develop-gha
+```
+
 ## Contributing
 
 Feel free!  The script can be run locally with any arguments you want to test, and unsurprisingly, running `nix develop` will give you the same dependencies used to test changes in CI.

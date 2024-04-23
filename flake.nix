@@ -13,6 +13,13 @@
         });
   in {
     formatter = eachSystem ({pkgs, ...}: pkgs.alejandra);
+    packages = eachSystem ({pkgs, ...}: {
+      default = pkgs.writeShellApplication {
+        name = "nix-develop-gha";
+        runtimeInputs = [pkgs.gnugrep pkgs.openssl.bin pkgs.coreutils];
+        text = builtins.readFile ./nix-develop-gha.sh;
+      };
+    });
     devShells = eachSystem ({pkgs, ...}: {
       default = pkgs.mkShell {
         packages = [pkgs.shellcheck pkgs.actionlint];
