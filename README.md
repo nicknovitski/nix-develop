@@ -1,30 +1,67 @@
 # nix-develop (for GitHub Actions)
 
-This is the most explicit and compatible way I know of to load a nix shell environment into a GitHub Actions job.
+This is the most explicit and compatible way I know of to load the environment of a nix flake devShell into a GitHub Actions job.  It works just like other `setup-*` actions: `use` it in a GitHub Actions job, and in all the following steps of that job, `PATH` will include all the dependencies of your project's default devShell, and the environment will include all variables set in that devShell.
+
+## Usage
+
+You can `use` this repository as a GitHub Action...
+```yaml
+  - uses: nicknovitski/nix-develop@v1
+```
+...or `run` it as a nix app...
+```yaml
+  - run: nix run github:nicknovitski/nix-develop/v1
+  # This works even on action runners with nothing besides nix installed!
+```
+...or for the nixiest possible approach, add it to your flake's `inputs`, expose its `packages.default` output as one of your own `packages`, and `nix run` it that way.
+```nix
+# flake.nix
+{
+  inputs = {
+    nix-develop-gha.url = "github:nicknovitski/nix-develop";
+    nix-develop-gha.inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = { nixpkgs, nix-develop-gha, ... }:
+    in {
+      packages.x86_64-linux.nix-develop-gha = nix-develop-gha.packages.x86_64-linux.default;
+      devShells.default = let
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      in pkgs.mkShell {
+          packages = [
+            # your development dependencies
+          ];
+        };
+      };
+    });
+}
+```
+```yaml
+  - run: nix run .#nix-develop-gha
+```
+
+### Arguments
+
+You can pass arbitrary command-line arguments to the underlying [`nix develop`](https://nix.dev/manual/nix/2.18/command-ref/new-cli/nix3-develop) command.
+
+```yaml 
+  - uses: nicknovitski/nix-develop@v1
+    with:
+      arguments: "github:DeterminateSystems/zero-to-nix#multi"
+  - run: nix run github:nicknovitski/nix-develop -- github:DeterminateSystems/zero-to-nix#multi
+```
 
 ## Why?
 
 Why would you load a nix shell environment into a GitHub Actions job?
 
-If you haven't heard about nix, I highly recommend reading [a good introduction for it elsewhere](https://zero-to-nix.com/), but its relevant feature for our purposes right now is that you can use it to write succint and reliably reproducible cross-platform shell environments, and this can help you [manage build dependencies very well](https://determinate.systems/posts/nix-github-actions).  Currently this action cannot help you, so I wish you luck on your journey of discovery.
+If you haven't heard of nix, then you don't need this action.  Nix lets you write succint and reliably reproducible cross-platform shell environments, among [many other things](https://zero-to-nix.com/).  This can help you [manage build dependencies very well](https://determinate.systems/posts/nix-github-actions).
 
-If you have heard about nix, and you already have all your builds and tests expressed as derivations, then you do not need this action!  Your GitHub CI workflows are just checking out the code and running `nix-build` or `nix flake check`, and they benefit from result caching and build-skipping that the rest of us can only dream of!  Currently this action cannot help you, so only keep reading if you're curious.
+If you have heard about nix, and you already have all your builds and tests expressed as derivations, then you don't need this action.  Your GitHub CI workflows are just checking out the code and running `nix-build` or `nix flake check`!  Only keep reading if you're curious.
 
-But finally, for the rest of us who already know the value of specifying shell environments in nix and using `nix develop`, and need to run commands in GitHub actions other _besides_ `nix-build` and `nix flake check`, this action is a better
+I made this action for the people who know the value of specifying shell environments in nix and using `nix develop`, and need to run any commands in GitHub actions _besides_ `nix-build` and `nix flake check`.
 
-
-## How?
-
-How can you use this action usefully, and how does it interact with the rest of your system?
-
-Think of it like running `nix develop` in a way that works exactly like any other `setup-*` action:
-
-- In the step where you `use:` this action, it will run `nix develop`, which evaluates and build the `devShells.default` attribute of your repository's `flake.nix` file (or its `packages.default` attribute, or any other flake reference you like, (see below)). This will download any needed packages.
-- In all subsequent steps in that job, **including ones that `use:` third-party actions**, dependencies in that flake output will be added to PATH, and all environment variables in it will be present.
-
-(I bolded that last part because it isn't a feature I've seen in any other approach, and it's a feature I needed to install yarn via nix and then `use: actions/setup-node` to handle yarn caching.  Thanks for reading!)
-
-In other words, rather than [this](https://github.com/DeterminateSystems/nix-github-actions/blob/main/.github/workflows/nix.yml)...
+Those people can now, instead of doing things like [this](https://github.com/DeterminateSystems/nix-github-actions/blob/main/.github/workflows/nix.yml)...
 ```yaml
       - run: |
           nix develop --command \
@@ -42,8 +79,7 @@ In other words, rather than [this](https://github.com/DeterminateSystems/nix-git
               --skip target,.git \
               --ignore-words-list crate
 ```
-
-...or even this:
+...or even this...
 ```yaml
       - run: cargo fmt --check
         shell: nix develop --command bash -e {0}
@@ -57,8 +93,7 @@ In other words, rather than [this](https://github.com/DeterminateSystems/nix-git
               --ignore-words-list crate
         shell: nix develop --command bash -e {0}
 ```
-
-...you can do this:
+...can instead do this:
 ```yaml
       - uses: nicknovitski/nix-develop@v1
       - run: cargo fmt --check
@@ -70,61 +105,19 @@ In other words, rather than [this](https://github.com/DeterminateSystems/nix-git
               --ignore-words-list crate
 ```
 
-You can also pass arbitrary arguments, like using another flake reference:
+Besides just being less repetitive, only the `nix-develop` action makes the devShell environment available in all subsequent steps in the job, **including ones that `use:` third-party actions**.  So the other approaches aren't fully compatible with the GitHub Actions ecosystem.
 
-```yaml 
-  - uses: nicknovitski/nix-develop@v1
-    with:
-      arguments: "github:DeterminateSystems/zero-to-nix#multi"
-```
+(That's originally why I wrote this action: I was working on a project which used [yarn](https://yarnpkg.com/) and GitHub Actions, and I wanted to install node and yarn with nix, but then `use` [the `setup-node` action](https://github.com/actions/setup-node) to handle caching of node modules.  For that to work, `setup-node` needed to have `yarn` in `PATH`.)
 
+## How?
 
-But in addition to being a github action, this repository is a nix flake.  So you could just do this:
+How does the action work?
 
-```yaml
-  - run: nix run github:nicknovitski/nix-develop -- github:DeterminateSystems/zero-to-nix#multi
-```
+First it runs `nix develop`. Without additional arguments, this evaluates and if necessary builds the `devShells.default` of the flake in the current working directory, or as a fall-back, the `packages.default`.
 
-And if you want to be sure you're controlling the version of this script and its dependencies, you can use nix!
+For each variable in the build environment of the `nix develop` target besides `PATH`, if the same variable is either unset or set to a different value in the step's current environment, the target's variable value is [echo'd to `GITHUB_ENV`, setting that variable for all subsequent steps in the job](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable). 
 
-```nix
-# flake.nix
-{
-  inputs = {
-    nix-develop-gha.url = "github:nicknovitski/nix-develop";
-    nix-develop-gha.inputs.nixpkgs.follows = "nixpkgs"; # match your own "nixpkgs" input
-  };
-
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    nix-develop-gha,
-  }:
-    flake-utils.lib.eachDefaultSystem
-    (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-    in {
-      # expose your locked version of the action locally
-      packages.nix-develop-gha = nix-develop-gha.packages.${system}.default;
-      # don't forget your development shell!
-      devShells = {
-        default = pkgs.mkShell {
-          packages = [
-            pkgs.yarn
-            pkgs.nodejs
-          ];
-        };
-      };
-    });
-}
-```
-
-...and then you can use the pinned package in your workflows like this:
-```yaml
-  - uses: actions/checkout@v4
-  - run: nix run .#nix-develop-gha
-```
+For each entry in the build environment's `PATH` variable, starting from the _last_ and ending with the _first_, if the entry is not present in the `PATH` of the step's current environment, it is [echo'd to `GITHUB_PATH`, prepending it to the `PATH` variable in all subsequent steps of the job](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-system-path).
 
 ## Contributing
 
