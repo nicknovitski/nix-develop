@@ -15,10 +15,13 @@ contains() {
 	grep "$1" --silent <<<"$2"
 }
 
-# Add all environment variables except for PATH to GITHUB_ENV.
+# Add all environment variables except for PATH and SHELL to GITHUB_ENV.
 while IFS='=' read -r -d '' n v; do
 	if [ "$n" == "PATH" ]; then
 		continue
+	fi
+ 	if [ "$n" == "SHELL" ]; then
+  		continue
 	fi
 	# Skip if the variable is already in the environment with the same
 	# value (treating unset and the empty string as identical states)
