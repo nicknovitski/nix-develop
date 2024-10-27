@@ -22,7 +22,7 @@
     });
     devShells = eachSystem ({pkgs, ...}: {
       default = pkgs.mkShell {
-        packages = [pkgs.shellcheck pkgs.actionlint];
+        packages = [pkgs.shfmt pkgs.shellcheck pkgs.actionlint];
       };
     });
   };
