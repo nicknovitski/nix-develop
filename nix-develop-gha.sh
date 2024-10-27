@@ -6,7 +6,8 @@ set -euo pipefail
 IFS=" " read -r -a arguments <<<"${@:-./#default}"
 
 with_nix_develop() {
-	nix develop "${arguments[@]}" --command "$@"
+	delimiter=$(openssl rand -base64 18)
+	nix develop "${arguments[@]}" --command bash -c "echo $delimiter; $*" | sed -n "\|$delimiter|,\$p" | tail -n +2
 }
 
 with_nix_develop true # Exit immediately if build fails
@@ -35,10 +36,10 @@ while IFS='=' read -r -d '' n v; do
 		continue
 	fi
 	printf "%s=%s\n" "$n" "$v" >>"${GITHUB_ENV:-/dev/stderr}"
-done < <(with_nix_develop env -0)
+done < <(with_nix_develop "env -0")
 
 # Read the nix environment's $PATH into an array
-IFS=":" read -r -a nix_path_array <<<"$(with_nix_develop bash -c "echo \$PATH")"
+IFS=":" read -r -a nix_path_array <<<"$(with_nix_develop "echo \$PATH")"
 
 # Iterate over the PATH array in reverse
 #

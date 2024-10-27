@@ -16,7 +16,7 @@
     packages = eachSystem ({pkgs, ...}: {
       default = pkgs.writeShellApplication {
         name = "nix-develop-gha";
-        runtimeInputs = [pkgs.gnugrep pkgs.openssl.bin pkgs.coreutils];
+        runtimeInputs = [pkgs.gnugrep pkgs.openssl.bin pkgs.coreutils pkgs.gnused];
         text = builtins.readFile ./nix-develop-gha.sh;
       };
     });
