@@ -25,5 +25,35 @@
         packages = [pkgs.shfmt pkgs.shellcheck pkgs.actionlint];
       };
     });
+    checks = eachSystem ({
+      pkgs,
+      system,
+      ...
+    }: {
+      package = self.packages.${system}.default;
+      actionlint = let
+        fs = pkgs.lib.fileset;
+      in
+        pkgs.runCommand "lint-actions" {
+          nativeBuildInputs = [
+            pkgs.actionlint
+            pkgs.git
+            pkgs.shellcheck # actionlint uses this to check `run:` stanzas
+          ];
+          src = fs.toSource {
+            root = ./.;
+            fileset = fs.unions [./.github/workflows];
+          };
+        }
+        ''
+          set -euo pipefail
+          cp -R $src src-copy
+          chmod -R +w src-copy
+          cd src-copy
+          git init --quiet
+          actionlint -color
+          touch $out
+        '';
+    });
   };
 }

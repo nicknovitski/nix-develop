@@ -5,7 +5,29 @@ on:
       - main
       - 'releases/*'
 jobs:
-  test:
+  list-determinate-shells:
+    runs-on: ubuntu-22.04
+    outputs:
+      shells: ${{ steps.shells.outputs.shells }}
+    steps:
+      - uses: cachix/install-nix-action@v30
+      - id: shells
+        run: |
+          echo "shells=$(nix eval github:DeterminateSystems/zero-to-nix#devShells.x86_64-linux --apply builtins.attrNames --json)" >> "$GITHUB_OUTPUT"
+  test-determinate-shells:
+    needs:
+      - list-determinate-shells
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        shell: ${{ fromJSON(needs.list-determinate-shells.outputs.shells) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - uses: ./
+        with:
+          arguments: github:DeterminateSystems/zero-to-nix#${{ matrix.shell }}
+  test-self:
     strategy:
       matrix:
         runs-on:
@@ -16,9 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
       - uses: ./
-      - run: actionlint
-      - run: shellcheck nix-develop-gha.sh
-  test-determinate:
+  check:
     strategy:
       matrix:
         runs-on:
@@ -27,7 +47,5 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: ./
-      - run: actionlint
-      - run: shellcheck nix-develop-gha.sh
+      - uses: cachix/install-nix-action@v30
+      - run: nix flake check --keep-going --print-build-logs --show-trace
