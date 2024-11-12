@@ -38,6 +38,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
       - uses: ./
+      - name: Make the nix command fail
+        uses: ./
+        with:
+          arguments: --a-bad-flag
+        id: should-fail
+        continue-on-error: true
+      - name: Fail if the action succeeded when the nix command failed
+        if: steps.should-fail.outcome == 'success'
+        run: exit 1
   check:
     strategy:
       matrix:

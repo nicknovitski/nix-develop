@@ -11,8 +11,10 @@ contains() {
 
 envOutput=
 
-# Iterate over the output of `env -0` in the shell environment
-while IFS='=' read -r -d '' n v; do
+# Iterate over the output of `env -0`
+# On the last loop, exit with the last value read, which will be the exit
+# status of `nix develop`.
+while IFS='=' read -r -d '' n v || exit "$n"; do
 	# If this variable is empty then we're in the first loop, and $n is the
 	# output of the shellHook _before_ `env` is run.
 	if ! [ "$envOutput" ]; then
@@ -68,4 +70,10 @@ while IFS='=' read -r -d '' n v; do
 	fi
 	# Add all environment variables except for PATH to GITHUB_ENV.
 	printf "%s=%s\n" "$n" "$v" >>"${GITHUB_ENV:-/dev/stderr}"
-done < <(nix develop "${arguments[@]}" --command bash -c "echo -ne '\0'; env -0")
+done < <(
+	set +e # Even if the next line fails, run the line after that
+	# Run env -0 in the shell environment, prefixed with an extra
+	# delimiter to fence off output from the shellHook.
+	nix develop "${arguments[@]}" --command bash -c "echo -ne '\0'; env -0"
+	printf '%s' "$?" # Print the exit status of the previous line.  This will always be the last value of the while loop
+)
