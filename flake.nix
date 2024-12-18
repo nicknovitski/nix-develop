@@ -24,6 +24,9 @@
       default = pkgs.mkShell {
         packages = [pkgs.shfmt pkgs.shellcheck pkgs.actionlint];
       };
+      notDefault = pkgs.mkShell {
+        packages = [pkgs.cowsay];
+      };
     });
     checks = eachSystem ({
       pkgs,

@@ -1,9 +1,6 @@
 on:
   pull_request:
   push:
-    branches:
-      - main
-      - 'releases/*'
 jobs:
   list-determinate-shells:
     runs-on: ubuntu-22.04
@@ -37,11 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v30
-      - uses: ./
-      - name: Make the nix command fail
+      - name: Test with another local shell target
         uses: ./
         with:
-          arguments: --a-bad-flag
+          arguments: ./#notDefault
+      - run: which shfmt
         id: should-fail
         continue-on-error: true
       - name: Fail if the action succeeded when the nix command failed
