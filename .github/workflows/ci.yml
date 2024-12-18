@@ -3,8 +3,13 @@ on:
   push:
     branches:
       - main
-      - 'releases/*'
 jobs:
+  format:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v30
+      - run: nix fmt -- . --check
   list-determinate-shells:
     runs-on: ubuntu-22.04
     outputs:
