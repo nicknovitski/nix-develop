@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Read the arguments into an array, so they can be added correctly as flags
-IFS=" " read -r -a arguments <<<"${@:-./#default}"
+IFS=" " read -r -a arguments <<<"${@}"
 
 contains() {
 	grep "$1" --silent <<<"$2"
