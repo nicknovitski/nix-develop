@@ -9,6 +9,9 @@ contains() {
 	grep "$1" --silent <<<"$2"
 }
 
+# Get openssl from Nix if it isn't available on the system
+OPENSSL=$(which openssl 2>/dev/null || echo "$(nix build nixpkgs#openssl.bin --no-link --print-out-paths)/bin/openssl")
+
 envOutput=
 
 # Iterate over the output of `env -0`
@@ -60,7 +63,7 @@ while IFS='=' read -r -d '' n v || exit "$n"; do
 	# Ref https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#setting-an-environment-variable
 	# Use a random string as a heredoc delimiter for multi-line strings
 	if (("$(wc -l <<<"$v")" > 1)); then
-		delimiter=$(openssl rand -base64 18)
+		delimiter=$($OPENSSL rand -base64 18)
 		if contains "$delimiter" "$v"; then
 			echo "Environment variable $n contains randomly generated string $delimiter, file an issue and buy a lottery ticket."
 			exit 1
