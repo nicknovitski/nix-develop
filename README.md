@@ -4,16 +4,17 @@ This is the most explicit and compatible way I know of to load the environment o
 
 ## Usage
 
-You can `use` this repository as a GitHub Action...
+On Github-hosted runners, or self-hosted runners with all the same tools installed, you can `use` this repository as a GitHub action!
 ```yaml
   - uses: nicknovitski/nix-develop@v1
 ```
-...or `run` it as a nix app...
+
+Otherwise (for example, on self-hosted runners with only `nix` installed), you can `nix run` this repository as a flake!
 ```yaml
   - run: nix run github:nicknovitski/nix-develop/v1
-  # This works even on action runners with nothing besides nix installed!
 ```
-...or for the nixiest possible approach, add it to your flake's `inputs`, expose its `packages.default` output as one of your own `packages`, and `nix run` it that way.
+
+Or, to lock the exact dependency versions used, you can add this repository to your flake's `inputs`, expose its `packages.default` output as one of your own `packages`, and `nix run` it that way.
 ```nix
 # flake.nix
 {
