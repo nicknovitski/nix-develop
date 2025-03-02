@@ -5,8 +5,12 @@ inputs:
   arguments:
     description: Additional arguments to pass to the `nix develop` command
     required: false
+  devShell:
+    description: The development shell to use
+    required: false
+    default: '.#default'
 runs:
   using: "composite"
   steps:
     - shell: bash
-      run: ${{ github.action_path }}/nix-develop-gha.sh ${{ inputs.arguments }}
+      run: ${{ github.action_path }}/nix-develop-gha.sh ${{ inputs.devShell }} ${{ inputs.arguments }}
