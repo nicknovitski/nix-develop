@@ -8,14 +8,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
+      - uses: cachix/install-nix-action@v31
       - run: nix fmt -- . --check
   list-determinate-shells:
     runs-on: ubuntu-22.04
     outputs:
       shells: ${{ steps.shells.outputs.shells }}
     steps:
-      - uses: cachix/install-nix-action@v30
+      - uses: cachix/install-nix-action@v31
       - id: shells
         run: |
           echo "shells=$(nix eval github:DeterminateSystems/zero-to-nix#devShells.x86_64-linux --apply builtins.attrNames --json)" >> "$GITHUB_OUTPUT"
@@ -28,7 +28,7 @@ jobs:
         shell: ${{ fromJSON(needs.list-determinate-shells.outputs.shells) }}
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
+      - uses: cachix/install-nix-action@v31
       - uses: ./
         with:
           arguments: github:DeterminateSystems/zero-to-nix#${{ matrix.shell }}
@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
+      - uses: cachix/install-nix-action@v31
       - uses: ./
       - name: Make the nix command fail
         uses: ./
@@ -61,5 +61,5 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
+      - uses: cachix/install-nix-action@v31
       - run: nix flake check --keep-going --print-build-logs --show-trace
